@@ -5,55 +5,67 @@ export default class ImageText {
 	type: "local" | "url"
 	name: string | undefined
 
-	constructor(text: string) {
-		if (text.startsWith("![[")) {
-			this.parseLocalImage(text)
-		} else {
-			this.parseUrlImage(text)
-		}
-	}
+        constructor(text: string) {
+                if (text.startsWith("![[")) {
+                        this.parseLocalImage(text)
+                } else if (text.startsWith("![")) {
+                        this.parseUrlImage(text)
+                }
+        }
 
-	parseLocalImage(text: string) {
-		this.type = "local"
-		const params = text.slice(3, text.length-2).split("|")
-		this.img = params[0]
+        parseLocalImage(text: string) {
+                const match = text.match(/!\[\[(.*?)\]\]/)
+                if (!match || match[1] === undefined) {
+                        return
+                }
 
-		if (params.length == 3) {
-			this.align = params[1]
-			this.width = params[2]
-			return
-		}
+                this.type = "local"
 
-		if (params.length == 2) {
-			if (params[1] == "left" || params[1] == "center" || params[1] == "right") {
-				this.align = params[1]
-			} else {
-				this.width = params[1]
-			}
-		}
-	}
+                const params = match[1].split("|")
+                this.img = params[0]
 
-	parseUrlImage(text: string) {
-		this.type = "url"
-		const prefix = text.split("]")[0].split("[")[1]
-		const params = prefix.split("|")
-		this.name = params[0]
+                if (params.length == 3) {
+                        this.align = params[1]
+                        this.width = params[2]
+                        return
+                }
 
-		if (params.length == 3) {
-			this.align = params[1]
-			this.width = params[2]
-		}
+                if (params.length == 2) {
+                        if (params[1] == "left" || params[1] == "center" || params[1] == "right") {
+                                this.align = params[1]
+                        } else {
+                                this.width = params[1]
+                        }
+                }
+        }
 
-		if (params.length == 2) {
-			if (params[1] == "left" || params[1] == "center" || params[1] == "right") {
-				this.align = params[1]
-			} else {
-				this.width = params[1]
-			}
-		}
+        parseUrlImage(text: string) {
+                const match = text.match(/!\[(.*?)\]\((.*?)\)/)
+                if (!match || match[1] === undefined || match[2] === undefined) {
+                        return
+                }
 
-		this.img = text.split("(")[1].split(")")[0]
-	}
+                this.type = "url"
+
+                const prefix = match[1]
+                const params = prefix.split("|")
+                this.name = params[0]
+
+                if (params.length == 3) {
+                        this.align = params[1]
+                        this.width = params[2]
+                }
+
+                if (params.length == 2) {
+                        if (params[1] == "left" || params[1] == "center" || params[1] == "right") {
+                                this.align = params[1]
+                        } else {
+                                this.width = params[1]
+                        }
+                }
+
+                this.img = match[2]
+        }
 
 	getImageText() {
 		return this.type === "local" ? this.getLocalImageText() : this.getUrlImageText()
@@ -78,9 +90,8 @@ export default class ImageText {
 		if (this.width !== undefined) {
 			prefix += "|" + this.width
 		}
-		console.log(this.img)
-		return `![${prefix}](${this.img})`
-	}
+                return `![${prefix}](${this.img})`
+        }
 
 	setWidth(newWidth: string) {
 		this.width = newWidth

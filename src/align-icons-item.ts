@@ -12,19 +12,22 @@ export default class AlignIconsItem implements PluginValue {
 		this.mdText = new MDText(update.state.doc.toString())
 		const imageContainerDivs = update.view.dom.getElementsByClassName("image-embed")
 		
-		Array.from(imageContainerDivs).forEach((imageContainerDiv: any) => {
-			const img = imageContainerDiv.children[0]
-			
-			const classes = Array.from(imageContainerDiv.children).map((x: any) => x.className)
-			if (imageContainerDiv.children[0].tagName === "IMG" && !(classes.includes(this.alignIconsClassName))) {
-				this.addAlignIcons(img)
-			}
+                Array.from(imageContainerDivs).forEach((imageContainerDiv: any) => {
+                        const img = imageContainerDiv.children[0]
 
-			if (!imageContainerDiv.className.includes("images-tools-text-align-")) {
-				const textAlignClassName = "images-tools-text-align-" + this.mdText.getImageText(img.parentNode.getAttribute("src")).align
-				imageContainerDiv.classList.add(textAlignClassName)
-			}
-		})
+                        const classes = Array.from(imageContainerDiv.children).map((x: any) => x.className)
+                        if (imageContainerDiv.children[0].tagName === "IMG" && !(classes.includes(this.alignIconsClassName))) {
+                                this.addAlignIcons(img)
+                        }
+
+                        if (!imageContainerDiv.className.includes("images-tools-text-align-")) {
+                                const imageText = this.mdText.getImageText(img.parentNode.getAttribute("src"))
+                                if (imageText && imageText.align) {
+                                        const textAlignClassName = "images-tools-text-align-" + imageText.align
+                                        imageContainerDiv.classList.add(textAlignClassName)
+                                }
+                        }
+                })
 	}
 
 	addAlignIcons(img: any) {
@@ -72,15 +75,19 @@ export default class AlignIconsItem implements PluginValue {
 		return icon
 	}
 
-	setNewAlignForImage(img: any, newAlign: string) {
-		const imgName = img.parentNode.getAttribute("src")
-		let imageText = this.mdText.getImageText(imgName)
-		let [indexStart, indexEnd] = this.mdText.getImageIndexes(imgName)
-		imageText.setAlign(newAlign)
+        setNewAlignForImage(img: any, newAlign: string) {
+                const imgName = img.parentNode.getAttribute("src")
+                const imageText = this.mdText.getImageText(imgName)
+                const [indexStart, indexEnd] = this.mdText.getImageIndexes(imgName)
+                if (!imageText || indexStart === -1 || indexEnd === -1) {
+                        return
+                }
 
-		const changes = this.viewUpdate.state.update({
-			changes: {from: indexStart, to: indexEnd, insert: imageText.getImageText()}
-		})
-		this.viewUpdate.view.dispatch(changes)
-	}
+                imageText.setAlign(newAlign)
+
+                const changes = this.viewUpdate.state.update({
+                        changes: {from: indexStart, to: indexEnd, insert: imageText.getImageText()}
+                })
+                this.viewUpdate.view.dispatch(changes)
+        }
 }

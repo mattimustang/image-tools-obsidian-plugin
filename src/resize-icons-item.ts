@@ -12,19 +12,25 @@ export default class ResizeIconsItem implements PluginValue {
 		this.mdText = new MDText(update.state.doc.toString())
 		const images = update.view.dom.getElementsByClassName("image-embed")
 
-		Array.from(images).forEach(img => {
-			const classes = Array.from(img.children).map(x => x.className)
-			if (img.children[0].tagName === "IMG" && !(classes.includes(this.rightResizeIconClassName))) {
-				this.addRightResizeIcon(img.children[0])
-			}
-		})
+                Array.from(images).forEach(img => {
+                        const classes = Array.from(img.children).map(x => x.className)
+                        if (img.children[0].tagName === "IMG" && !(classes.includes(this.rightResizeIconClassName))) {
+                                const imgName = img.getAttribute("src")
+                                if (this.mdText.getImageText(imgName)) {
+                                        this.addRightResizeIcon(img.children[0])
+                                }
+                        }
+                })
 
-		Array.from(images).forEach(img => {
-			const classes = Array.from(img.children).map(x => x.className)
-			if (img.children[0].tagName === "IMG" && !(classes.includes(this.leftResizeIconClassName))) {
-				this.addLeftResizeIcon(img.children[0])
-			}
-		})
+                Array.from(images).forEach(img => {
+                        const classes = Array.from(img.children).map(x => x.className)
+                        if (img.children[0].tagName === "IMG" && !(classes.includes(this.leftResizeIconClassName))) {
+                                const imgName = img.getAttribute("src")
+                                if (this.mdText.getImageText(imgName)) {
+                                        this.addLeftResizeIcon(img.children[0])
+                                }
+                        }
+                })
 	}
 
 	addRightResizeIcon(item: any) {
@@ -87,15 +93,18 @@ export default class ResizeIconsItem implements PluginValue {
 		item.parentNode?.append(icon)
 	}
 
-	setNewWidthForImage(img: any, newWidth: number) {
-		const imgName = img.parentNode.getAttribute("src")
-		let imageText = this.mdText.getImageText(imgName)
-		let [indexStart, indexEnd] = this.mdText.getImageIndexes(imgName)
-		imageText.setWidth(newWidth.toString())
+        setNewWidthForImage(img: any, newWidth: number) {
+                const imgName = img.parentNode.getAttribute("src")
+                const imageText = this.mdText.getImageText(imgName)
+                const [indexStart, indexEnd] = this.mdText.getImageIndexes(imgName)
+                if (!imageText || indexStart === -1 || indexEnd === -1) {
+                        return
+                }
+                imageText.setWidth(newWidth.toString())
 
-		const changes = this.viewUpdate.state.update({
-			changes: {from: indexStart, to: indexEnd, insert: imageText.getImageText()}
-		})
-		this.viewUpdate.view.dispatch(changes)
-	}
+                const changes = this.viewUpdate.state.update({
+                        changes: {from: indexStart, to: indexEnd, insert: imageText.getImageText()}
+                })
+                this.viewUpdate.view.dispatch(changes)
+        }
 }
